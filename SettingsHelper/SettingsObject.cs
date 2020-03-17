@@ -18,6 +18,48 @@ namespace SettingsHelper
             SettingsPath = Environment.CurrentDirectory + "\\settings\\settings.json";
         }
 
+        private JObject JSONObj = null;
+        private void JSONObjInit()
+        {
+            if(JSONObj==null)
+            {
+                JSONObj = Value.DeepClone().ToObject<JObject>();
+            }
+            return;
+        }
+        public SettingsObject this[string propertyName]
+        {
+            get
+            {
+                JSONObjInit();
+                if(!JSONObj.ContainsKey(propertyName))//若无此Token
+                {
+                    JSONObj.Add(propertyName, new JObject());//添加
+                }
+                if(JSONObj[propertyName].GetType()==typeof(JObject))
+                {
+                    JSONObj = JSONObj[propertyName].ToObject<JObject>();//向下一层
+                }
+                return this;
+            }
+            set
+            {
+                JSONObjInit();
+                if(!JSONObj.ContainsKey(propertyName))
+                {
+                    JSONObj.Add(propertyName, new JObject());
+                }
+                JSONObj = JSONObj[propertyName].ToObject<JObject>();
+            }
+        }
+        public string this[string propertyName, string defaultValue]
+        {
+            get
+            {
+                JSONObjInit();
+                return "";
+            }
+        }
         /// <summary>
         /// 找不到设置的委托
         /// </summary>
@@ -33,6 +75,7 @@ namespace SettingsHelper
         {
             SettingsNotFound?.Invoke(this, args);//发布事件，我不明白为啥这样写，但VS建议我将判空语句简化
         }
+
         public void SaveSettings()
         {
             //没有能力处理异常(参见JSONWriter类中的异常类型)
@@ -40,7 +83,6 @@ namespace SettingsHelper
             writer.WriteJSON<JObject>(this.Value);
             return;
         }
-
         public void GetSettings()
         {
             try
